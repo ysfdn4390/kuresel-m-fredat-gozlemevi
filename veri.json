@@ -34,5 +34,41 @@
     "AI_Maturity_Score": 0,
     "ECTS_Credit": "8 AKTS",
     "Academic_Justification": "Devletlerin dış politika karar alma süreçleri, aktörler, yapılar ve kuramsal modeller."
+  },
+  {
+    "University_Name": "Middle East Technical University (METU)",
+    "Course_Code": "Academics",
+    "Course_Name": " Faculties, Institutes & Schools Undergraduate Programs and Degrees Graduate Programs and Degrees In",
+    "Sub_Category": "Klasik Uİ",
+    "AI_Maturity_Score": 0,
+    "ECTS_Credit": "6 ECTS",
+    "Academic_Justification": "Geleneksel teorik dış politika yaklaşımı, uluslararası hukuk ve diplomasi tarihi."
+  },
+  {
+    "University_Name": "Middle East Technical University (METU)",
+    "Course_Code": "IR",
+    "Course_Name": "Joint-Degree Programs",
+    "Sub_Category": "Klasik Uİ",
+    "AI_Maturity_Score": 0,
+    "ECTS_Credit": "6 ECTS",
+    "Academic_Justification": "Geleneksel teorik dış politika yaklaşımı, uluslararası hukuk ve diplomasi tarihi."
+  },
+  {
+    "University_Name": "Middle East Technical University (METU)",
+    "Course_Code": "Student",
+    "Course_Name": "Affairs  Registration Academic Rules & Regulations METU-SIS Student Affairs Information System Inter",
+    "Sub_Category": "Metodoloji ve Kodlama",
+    "AI_Maturity_Score": 3,
+    "ECTS_Credit": "6 ECTS",
+    "Academic_Justification": "Büyük veri analitiği, algoritmik yönetim süreçleri ve dijital çağ diplomasisi."
+  },
+  {
+    "University_Name": "Middle East Technical University (METU)",
+    "Course_Code": "IR",
+    "Course_Name": "Cooperations Office",
+    "Sub_Category": "Klasik Uİ",
+    "AI_Maturity_Score": 0,
+    "ECTS_Credit": "6 ECTS",
+    "Academic_Justification": "Geleneksel teorik dış politika yaklaşımı, uluslararası hukuk ve diplomasi tarihi."
   }
 ]
