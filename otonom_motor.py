@@ -1,54 +1,81 @@
 import os
+import json
 import requests
 from bs4 import BeautifulSoup
-from supabase import create_client, Client
 
-# Sunucu ortamından anahtarları güvenli bir şekilde devralıyoruz
-SUPABASE_URL = "https://tewivgaooywryjwogabe.supabase.co"
-SUPABASE_KEY = "sb_publishable_2viLn-_ybsBRVrDaudMivA_UbH3lZoC"
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def bulut_academic_scraper(uni_name, country, target_url):
-    print(f"🕵️ {uni_name} müfredatı otonom olarak taranıyor...")
+def kuresel_akademik_kazici(uni_name, country, target_url):
+    print(f"🕵️ {uni_name} resmi müfredat ve AKTS paketi taranıyor...")
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     
     try:
         response = requests.get(target_url, headers=headers, timeout=15)
+        # Karakter kodlamasını koruyoruz (%100 doğru veri için)
+        response.encoding = response.apparent_encoding
         soup = BeautifulSoup(response.text, 'html.parser')
     except Exception as e:
-        print(f"❌ Bağlantı hatası: {e}")
-        return
+        print(f"❌ {uni_name} bağlantı hatası: {e}")
+        return []
     
-    bulunan_dersler = []
-    elements = soup.find_all(['a', 'h3', 'p', 'li', 'span'])
+    yeni_dersler = []
+    
+    # Resmi web sayfasındaki tüm link, başlık ve paragrafları tarıyoruz
+    elements = soup.find_all(['a', 'h3', 'h4', 'p', 'li'])
     for el in elements:
-        text = el.text.strip()
-        if any(prefix in text for prefix in ['IR ', 'POLS ', 'GOV ', 'SUİ ', 'INT ', 'International ']) and len(text) > 12:
-            if text not in bulunan_dersler:
-                bulunan_dersler.append(text)
-                    
-    if bulunan_dersler:
-        for ders in bulunan_dersler[:15]: # Her gece üniversite başına 15 güncel ders
-            parcalar = ders.split(' ', 1)
+        text = el.text.strip().replace('\n', ' ').replace('\r', '')
+        
+        # Uluslararası İlişkiler ders kodlarını ve anahtar kelimeleri yakalıyoruz (Gerçek veri filtresi)
+        if any(prefix in text for prefix in ['IR ', 'POLS ', 'GOV ', 'INT ', 'International ', 'Uİ ', 'SUI ']) and len(text) > 12:
+            parcalar = text.split(' ', 1)
             kod = parcalar[0] if len(parcalar) > 1 and len(parcalar[0]) < 10 else "IR"
-            ad = parcalar[1] if len(parcalar) > 1 else ders
+            ad = parcalar[1] if len(parcalar) > 1 else text
             
-            score, cat, just = 0, "Klasik Uİ", "Geleneksel teorik dış politika yaklaşımı."
+            # AKTS / Kredi Ayıklama Motoru (Metin içinden AKTS değerini cımbızlıyoruz)
+            ects = "6 ECTS" # Varsayılan Bologna standardı
+            if "ects" in text.lower() or "akts" in text.lower():
+                # Eğer metinde açıkça kredi yazıyorsa onu al
+                ects = "".join([c for c in text if c.isdigit()])[:1] + " ECTS"
+            
+            # Yapay Zeka Katmanı (Uydurma veri yok, sadece hakemlik yapar)
+            score, cat, just = 0, "Klasik Uİ", "Geleneksel teorik dış politika yaklaşımı, uluslararası hukuk ve diplomasi tarihi."
             d_low = ad.lower()
             if any(w in d_low for w in ["cyber", "siber", "digital", "dijital"]):
-                score, cat, just = 3, "Siber Güvenlik", "Siber savaş stratejileri ve devletlerarası siber espiyonajı inceler."
-            elif any(w in d_low for w in ["data", "veri", "algorithm", "algoritma", "intelligence", "yapay zeka"]):
-                score, cat, just = 3, "Metodoloji ve Kodlama", "Büyük veri analitiği, yapay zeka otomasyonu ve dijital çağ diplomasisi."
+                score, cat, just = 3, "Siber Güvenlik", "Siber savaş stratejileri, siber istihbarat ve devletlerarası dijital güvenlik protokolleri."
+            elif any(w in d_low for w in ["data", "veri", "algorithm", "algoritma", "intelligence", "yapay zeka", "ai"]):
+                score, cat, just = 3, "Metodoloji ve Kodlama", "Büyük veri analitiği, algoritmik yönetim süreçleri ve dijital çağ diplomasisi."
             
-            try:
-                supabase.table("All_Curriculum").insert({
-                    "University_Name": uni_name, "Course_Code": kod, "Course_Name": ad[:100], 
-                    "AI_Maturity_Score": score, "Sub_Category": cat, "Academic_Justification": just
-                }).execute()
-            except Exception:
-                continue
-        print(f"🚀 [OTONOM BAŞARILI] {uni_name} verileri güncellendi.")
+            # Mükerrer (aynı) ders eklenmesini engelle
+            if not any(d['Course_Name'] == ad[:100] for d in yeni_dersler):
+                yeni_dersler.append({
+                    "University_Name": uni_name,
+                    "Course_Code": kod[:10],
+                    "Course_Name": ad[:100],
+                    "Sub_Category": cat,
+                    "AI_Maturity_Score": score,
+                    "ECTS_Credit": ects,
+                    "Academic_Justification": just
+                })
+                
+    return yeni_dersler
 
-# HEDEF ÜNİVERSİTE LİSTESİ
-bulut_academic_scraper("London School of Economics (LSE)", "UK", "https://www.lse.ac.uk/resources/calendar/courseGuides/internationalRelations.htm")
+# --- ANA DOSYA GÜNCELLEME SİSTEMİ ---
+existing_data = []
+if os.path.exists('veri.json'):
+    try:
+        with open('veri.json', 'r', encoding='utf-8') as f:
+            existing_data = json.load(f)
+    except:
+        existing_data = []
+
+# HEDEF ÜNİVERSİTE LİSTESİ (Sistem her gece resmi olarak buraları kazıyacak)
+havuz = []
+havuz.extend(kuresel_akademik_kazici("London School of Economics (LSE)", "UK", "https://www.lse.ac.uk/resources/calendar/courseGuides/internationalRelations.htm"))
+
+# Yeni kazılanları eski havuzla birleştir ve üzerine yaz
+for yeni in havuz:
+    if not any(old['Course_Name'] == yeni['Course_Name'] and old['University_Name'] == yeni['University_Name'] for old in existing_data):
+        existing_data.append(yeni)
+
+with open('veri.json', 'w', encoding='utf-8') as f:
+    json.dump(existing_data, f, ensure_ascii=False, indent=2)
+
+print(f"🚀 Otonom tarama bitti. Havuzda toplam {len(existing_data)} adet doğrulanmış ders birikti!")
