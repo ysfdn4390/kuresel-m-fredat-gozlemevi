@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Global IR Curriculum Observatory</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; padding: 25px; }
+        .brand-header { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; padding: 35px; border-radius: 16px; margin-bottom: 30px; }
+        .main-card { background-color: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); height: 100%; }
+        .form-control { background-color: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 10px; }
+        .form-control:focus { background-color: #1f2937; color: #fff; border-color: #3b82f6; box-shadow: none; }
+        .table { color: #e5e7eb; margin-bottom: 0; }
+        .table-dark-custom th { background-color: #1f2937; color: #9ca3af; border-bottom: 2px solid #374151; position: sticky; top: 0; z-index: 10; }
+        .table-hover tbody tr:hover { background-color: #1f2937 !important; cursor: help; }
+        .score-badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
+        .bg-score-3 { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .bg-score-2 { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+        .bg-score-0 { background-color: rgba(156, 163, 175, 0.2); color: #d1d5db; border: 1px solid #9ca3af; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="brand-header d-flex justify-content-between align-items-center shadow-lg">
+        <div>
+            <span class="badge bg-primary mb-2 px-3 py-2" style="font-size: 0.8rem; letter-spacing: 1px;">CANLI VERİ AKIŞI</span>
+            <h1 class="h2 m-0 font-weight-bold">🌐 Küresel Müfredat Gözlemevi</h1>
+            <p class="m-0 mt-2 text-muted">Dünya Üniversiteleri Uluslararası İlişkiler Bölümleri Teknoloji ve Yapay Zeka Entegrasyon Matrisi</p>
+        </div>
+        <div class="text-end d-none d-md-block">
+            <small class="text-muted d-block">Veritabanı Durumu</small>
+            <strong class="text-success" style="font-size: 1.1rem;">● Çevrimiçi / SQL Senkronize</strong>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-xl-4 col-lg-5">
+            <div class="d-flex flex-column gap-4" style="height: 100%;">
+                <div class="main-card">
+                    <h5 class="mb-3 text-primary">🔍 Gelişmiş Filtreleme</h5>
+                    <input type="text" id="webSearch" class="form-control py-2.5" placeholder="Ders adı, üniversite veya anahtar kelime yazın..." onkeyup="canliAra()">
+                </div>
+                <div class="main-card flex-grow-1">
+                    <h5 class="mb-4 text-primary">⚖️ Teknoloji Olgunluk Endeksi</h5>
+                    <div style="position: relative; height: 220px; margin-bottom: 30px;">
+                        <canvas id="observatoryChart"></canvas>
+                    </div>
+                    <h5 class="mb-3 text-primary">📊 Tematik Dağılım</h5>
+                    <div style="position: relative; height: 180px;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 col-lg-7">
+            <div class="main-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="m-0 text-primary">📋 Resmi Bologna ve Müfredat Veri Paketleri</h5>
+                    <span class="badge bg-dark border border-secondary text-secondary" id="rowCountBadge">Yükleniyor...</span>
+                </div>
+                <div style="max-height: 560px; overflow-y: auto; border: 1px solid #1f2937; border-radius: 10px;">
+                    <table class="table table-hover table-dark-custom align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 35%;">Üniversite / Ülke</th>
+                                <th style="width: 45%;">Resmi Ders Bilgisi</th>
+                                <th style="width: 20%; text-align: center;">AI Olgunluk Skoru</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sqlDataBody"></tbody>
+                    </table>
+                </div>
+                <small class="text-muted d-block mt-3">💡 İpucu: Gerekçe analizi ve AI açıklamalarını görmek için farenizi ders satırlarının üzerine getirin.</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dataPool = [];
+        const chartPool = {};
+        const categoryPool = {};
+
+        function tabloYaz(veri) {
+            const tbody = document.getElementById('sqlDataBody');
+            document.getElementById('rowCountBadge').innerText = `${veri.length} Ders Listeleniyor`;
+            tbody.innerHTML = '';
+            veri.forEach(d => {
+                let badgeClass = d.AI_Skor === 3 ? 'bg-score-3' : (d.AI_Skor === 2 ? 'bg-score-2' : 'bg-score-0');
+                tbody.innerHTML += `
+                    <tr title="Akademik Gerekçe: ${d.Gerekce}">
+                        <td>
+                            <strong style="color: #fff;">${d.Universite}</strong><br>
+                            <small class="text-muted" style="font-size: 0.8rem;">📍 ${d.Ulke}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-dark text-primary border border-primary mb-1" style="font-size: 0.75rem;">${d.Kod}</span>
+                            <span class="d-block" style="font-size: 0.95rem; color: #e5e7eb;">${d.Ad}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="score-badge ${badgeClass}">${d.AI_Skor} / 3 Puan</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function canliAra() {
+            let k = document.getElementById('webSearch').value.toLowerCase();
+            let f = dataPool.filter(d => d.Ad.toLowerCase().includes(k) || d.Universite.toLowerCase().includes(k) || d.Kategori.toLowerCase().includes(k));
+            tabloYaz(f);
+        }
+
+        const ctx1 = document.getElementById('observatoryChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(chartPool),
+                datasets: [{ label: 'Ortalama Teknoloji Skoru', data: Object.values(chartPool), backgroundColor: '#3b82f6', borderRadius: 6 }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 3, grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } }, y: { ticks: { color: '#9ca3af' } } } }
+        });
+
+        const ctx2 = document.getElementById('categoryChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categoryPool),
+                datasets: [{ data: Object.values(categoryPool), backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#4b5563'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', boxWidth: 12 } } } }
+        });
+
+        tabloYaz(dataPool);
+    </script>
+</body>
+</html>
