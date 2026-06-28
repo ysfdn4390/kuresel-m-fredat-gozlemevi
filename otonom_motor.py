@@ -60,10 +60,15 @@ if os.path.exists('veri.json'):
 
 # BÜTÜNLEŞİK KÜRESEL HEDEF LİSTESİ
 havuz = []
+# Küresel Örnekler
 havuz.extend(kuresel_akademik_kazici("London School of Economics (LSE)", "UK", "https://www.lse.ac.uk/resources/calendar/courseGuides/internationalRelations.htm"))
 havuz.extend(kuresel_akademik_kazici("Sciences Po", "France", "https://www.sciencespo.fr/college/en/academics/bachelor-degree/course-catalog.html"))
-havuz.extend(kuresel_akademik_kazici("Harvard University", "USA", "https://handbook.fas.harvard.edu/book/government"))
+
+# Türkiye Havuzu (Öncü Uİ Bölümleri)
 havuz.extend(kuresel_akademik_kazici("Middle East Technical University (METU)", "Turkey", "https://catalog.metu.edu.tr/program.php?prog=110"))
+havuz.extend(kuresel_akademik_kazici("Bilkent University", "Turkey", "https://catalog.bilkent.edu.tr/current/dep/d24.html"))
+havuz.extend(kuresel_akademik_kazici("Bogazici University", "Turkey", "https://boun.edu.tr/en_US/Content/Academic/Undergraduate_Catalogue/Faculty_of_Economics_and_Administrative_Sciences/Department_of_Political_Science_and_International_Relations"))
+havuz.extend(kuresel_akademik_kazici("Ankara University (Mülkiye)", "Turkey", "https://bbs.ankara.edu.tr/Ders_Plani.aspx?baskanlik=130600"))
 
 # Tekilleştirme ve Üzerine Yazma
 for yeni in havuz:
