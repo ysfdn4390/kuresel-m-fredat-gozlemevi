@@ -9,7 +9,6 @@ def kuresel_akademik_kazici(uni_name, country, target_url):
     
     try:
         response = requests.get(target_url, headers=headers, timeout=15)
-        # Karakter kodlamasını koruyoruz (%100 doğru veri için)
         response.encoding = response.apparent_encoding
         soup = BeautifulSoup(response.text, 'html.parser')
     except Exception as e:
@@ -17,25 +16,19 @@ def kuresel_akademik_kazici(uni_name, country, target_url):
         return []
     
     yeni_dersler = []
-    
-    # Resmi web sayfasındaki tüm link, başlık ve paragrafları tarıyoruz
     elements = soup.find_all(['a', 'h3', 'h4', 'p', 'li'])
     for el in elements:
         text = el.text.strip().replace('\n', ' ').replace('\r', '')
         
-        # Uluslararası İlişkiler ders kodlarını ve anahtar kelimeleri yakalıyoruz (Gerçek veri filtresi)
-        if any(prefix in text for prefix in ['IR ', 'POLS ', 'GOV ', 'INT ', 'International ', 'Uİ ', 'SUI ']) and len(text) > 12:
+        if any(prefix in text for prefix in ['IR ', 'POLS ', 'GOV ', 'INT ', 'International ', 'Uİ ', 'SUI ', 'Dış Siyaset ']) and len(text) > 12:
             parcalar = text.split(' ', 1)
             kod = parcalar[0] if len(parcalar) > 1 and len(parcalar[0]) < 10 else "IR"
             ad = parcalar[1] if len(parcalar) > 1 else text
             
-            # AKTS / Kredi Ayıklama Motoru (Metin içinden AKTS değerini cımbızlıyoruz)
-            ects = "6 ECTS" # Varsayılan Bologna standardı
-            if "ects" in text.lower() or "akts" in text.lower():
-                # Eğer metinde açıkça kredi yazıyorsa onu al
+            ects = "6 ECTS"
+            if "acts" in text.lower() or "akts" in text.lower() or "ects" in text.lower():
                 ects = "".join([c for c in text if c.isdigit()])[:1] + " ECTS"
             
-            # Yapay Zeka Katmanı (Uydurma veri yok, sadece hakemlik yapar)
             score, cat, just = 0, "Klasik Uİ", "Geleneksel teorik dış politika yaklaşımı, uluslararası hukuk ve diplomasi tarihi."
             d_low = ad.lower()
             if any(w in d_low for w in ["cyber", "siber", "digital", "dijital"]):
@@ -43,7 +36,6 @@ def kuresel_akademik_kazici(uni_name, country, target_url):
             elif any(w in d_low for w in ["data", "veri", "algorithm", "algoritma", "intelligence", "yapay zeka", "ai"]):
                 score, cat, just = 3, "Metodoloji ve Kodlama", "Büyük veri analitiği, algoritmik yönetim süreçleri ve dijital çağ diplomasisi."
             
-            # Mükerrer (aynı) ders eklenmesini engelle
             if not any(d['Course_Name'] == ad[:100] for d in yeni_dersler):
                 yeni_dersler.append({
                     "University_Name": uni_name,
@@ -57,7 +49,7 @@ def kuresel_akademik_kazici(uni_name, country, target_url):
                 
     return yeni_dersler
 
-# --- ANA DOSYA GÜNCELLEME SİSTEMİ ---
+# --- ANA VERİ DOSYASI GÜNCELLEME KATMANI ---
 existing_data = []
 if os.path.exists('veri.json'):
     try:
@@ -66,11 +58,14 @@ if os.path.exists('veri.json'):
     except:
         existing_data = []
 
-# HEDEF ÜNİVERSİTE LİSTESİ (Sistem her gece resmi olarak buraları kazıyacak)
+# BÜTÜNLEŞİK KÜRESEL HEDEF LİSTESİ
 havuz = []
 havuz.extend(kuresel_akademik_kazici("London School of Economics (LSE)", "UK", "https://www.lse.ac.uk/resources/calendar/courseGuides/internationalRelations.htm"))
+havuz.extend(kuresel_akademik_kazici("Sciences Po", "France", "https://www.sciencespo.fr/college/en/academics/bachelor-degree/course-catalog.html"))
+havuz.extend(kuresel_akademik_kazici("Harvard University", "USA", "https://handbook.fas.harvard.edu/book/government"))
+havuz.extend(kuresel_akademik_kazici("Middle East Technical University (METU)", "Turkey", "https://catalog.metu.edu.tr/program.php?prog=110"))
 
-# Yeni kazılanları eski havuzla birleştir ve üzerine yaz
+# Tekilleştirme ve Üzerine Yazma
 for yeni in havuz:
     if not any(old['Course_Name'] == yeni['Course_Name'] and old['University_Name'] == yeni['University_Name'] for old in existing_data):
         existing_data.append(yeni)
@@ -78,4 +73,4 @@ for yeni in havuz:
 with open('veri.json', 'w', encoding='utf-8') as f:
     json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
-print(f"🚀 Otonom tarama bitti. Havuzda toplam {len(existing_data)} adet doğrulanmış ders birikti!")
+print(f"🚀 Otonom tarama başarıyla bitti. Toplam ders sayısı: {len(existing_data)}")
