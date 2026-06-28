@@ -1,141 +1,210 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="utf-8">
-    <title>Global IR Curriculum Observatory</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Küresel Müfredat Gözlemevi | Canlı Veri Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; padding: 25px; }
-        .brand-header { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; padding: 35px; border-radius: 16px; margin-bottom: 30px; }
-        .main-card { background-color: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); height: 100%; }
-        .form-control { background-color: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 10px; }
-        .form-control:focus { background-color: #1f2937; color: #fff; border-color: #3b82f6; box-shadow: none; }
-        .table { color: #e5e7eb; margin-bottom: 0; }
-        .table-dark-custom th { background-color: #1f2937; color: #9ca3af; border-bottom: 2px solid #374151; position: sticky; top: 0; z-index: 10; }
-        .table-hover tbody tr:hover { background-color: #1f2937 !important; cursor: help; }
-        .score-badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
-        .bg-score-3 { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
-        .bg-score-2 { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
-        .bg-score-0 { background-color: rgba(156, 163, 175, 0.2); color: #d1d5db; border: 1px solid #9ca3af; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #111827; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+        body { background-color: #f8f9fa; color: #212529; font-family: system-ui, -apple-system, sans-serif; }
+        .navbar-brand { font-weight: 700; letter-spacing: -0.5px; }
+        .card { border: 1px solid rgba(0,0,0,.08); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,.02); }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: #0d6efd; }
+        .table-container { background: white; border-radius: 12px; border: 1px solid rgba(0,0,0,.08); overflow: hidden; }
+        .badge-ai-3 { background-color: #e0e7ff; color: #4338ca; font-weight: 600; }
+        .badge-ai-0 { background-color: #f3f4f6; color: #4b5563; }
+        .badge-cat { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
-    <div class="brand-header d-flex justify-content-between align-items-center shadow-lg">
-        <div>
-            <span class="badge bg-primary mb-2 px-3 py-2" style="font-size: 0.8rem; letter-spacing: 1px;">CANLI VERİ AKIŞI</span>
-            <h1 class="h2 m-0 font-weight-bold">🌐 Küresel Müfredat Gözlemevi</h1>
-            <p class="m-0 mt-2 text-muted">Dünya Üniversiteleri Uluslararası İlişkiler Bölümleri Teknoloji ve Yapay Zeka Entegrasyon Matrisi</p>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+        <div class="container py-1">
+            <a class="navbar-brand d-flex items-center" href="#">
+                <i class="fa-solid fa-globe me-2 text-primary"></i> Global Curriculum Observatory
+            </a>
+            <span class="badge bg-success d-flex align-items-center">
+                <span class="spinner-grow spinner-grow-sm text-light me-1" style="animation-duration: 1.5s;"></span>
+                Canlı Bulut Bağlantısı
+            </span>
         </div>
-        <div class="text-end d-none d-md-block">
-            <small class="text-muted d-block">Veritabanı Durumu</small>
-            <strong class="text-success" style="font-size: 1.1rem;">● Çevrimiçi / SQL Senkronize</strong>
-        </div>
-    </div>
-    
-    <div class="row g-4">
-        <div class="col-xl-4 col-lg-5">
-            <div class="d-flex flex-column gap-4" style="height: 100%;">
-                <div class="main-card">
-                    <h5 class="mb-3 text-primary">🔍 Gelişmiş Filtreleme</h5>
-                    <input type="text" id="webSearch" class="form-control py-2.5" placeholder="Ders adı, üniversite veya anahtar kelime yazın..." onkeyup="canliAra()">
-                </div>
-                <div class="main-card flex-grow-1">
-                    <h5 class="mb-4 text-primary">⚖️ Teknoloji Olgunluk Endeksi</h5>
-                    <div style="position: relative; height: 220px; margin-bottom: 30px;">
-                        <canvas id="observatoryChart"></canvas>
+    </nav>
+
+    <div class="container py-4">
+        
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-light text-primary rounded-3 me-3"><i class="fa-solid fa-university fs-3"></i></div>
+                        <div>
+                            <small class="text-muted d-block font-medium">İncelenen Üniversite</small>
+                            <span class="stat-value" id="stat-uni">-</span>
+                        </div>
                     </div>
-                    <h5 class="mb-3 text-primary">📊 Tematik Dağılım</h5>
-                    <div style="position: relative; height: 180px;">
-                        <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-light text-success rounded-3 me-3"><i class="fa-solid fa-book fs-3"></i></div>
+                        <div>
+                            <small class="text-muted d-block font-medium">Toplam Haritalanan Ders</small>
+                            <span class="stat-value text-success" id="stat-courses">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-light text-warning rounded-3 me-3"><i class="fa-solid fa-robot fs-3"></i></div>
+                        <div>
+                            <small class="text-muted d-block font-medium">Dijital/AI Dönüşüm Oranı</small>
+                            <span class="stat-value text-dark" id="stat-ai">-%</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-8 col-lg-7">
-            <div class="main-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0 text-primary">📋 Resmi Bologna ve Müfredat Veri Paketleri</h5>
-                    <span class="badge bg-dark border border-secondary text-secondary" id="rowCountBadge">Yükleniyor...</span>
+
+        <div class="card p-3 mb-4 bg-white">
+            <div class="row g-3">
+                <div class="col-12 col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="search-input" oninput="filtrele()" class="form-control bg-light border-start-0" placeholder="Ders adı, kodu veya üniversite ara...">
+                    </div>
                 </div>
-                <div style="max-height: 560px; overflow-y: auto; border: 1px solid #1f2937; border-radius: 10px;">
-                    <table class="table table-hover table-dark-custom align-middle">
-                        <thead>
-                            <tr>
-                                <th style="width: 35%;">Üniversite / Ülke</th>
-                                <th style="width: 45%;">Resmi Ders Bilgisi</th>
-                                <th style="width: 20%; text-align: center;">AI Olgunluk Skoru</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sqlDataBody"></tbody>
-                    </table>
+                <div class="col-12 col-md-4">
+                    <select id="filter-category" onchange="filtrele()" class="form-select bg-light">
+                        <option value="all">Tüm Kategoriler</option>
+                        <option value="Siber Güvenlik">Siber Güvenlik</option>
+                        <option value="Metodoloji ve Kodlama">Metodoloji ve Kodlama</option>
+                        <option value="Klasik Uİ">Klasik Uİ</option>
+                    </select>
                 </div>
-                <small class="text-muted d-block mt-3">💡 İpucu: Gerekçe analizi ve AI açıklamalarını görmek için farenizi ders satırlarının üzerine getirin.</small>
+            </div>
+        </div>
+
+        <div class="table-container shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-white table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary text-uppercase" style="font-size: 0.75rem; font-weight: 600;">
+                        <tr>
+                            <th class="px-4 py-3">Üniversite</th>
+                            <th class="px-4 py-3">Ders Kodu & Adı</th>
+                            <th class="px-4 py-3">Tema / Kategori</th>
+                            <th class="px-4 py-3">AI Olgunluk Skoru</th>
+                            <th class="px-4 py-3">Akademik Gerekçe</th>
+                        </tr>
+                    </thead>
+                    <tbody id="curriculum-table-body">
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                                Canlı bulut veritabanından güncel müfredat senkronize ediliyor...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        const dataPool = [];
-        const chartPool = {};
-        const categoryPool = {};
+        const SUPABASE_URL = "https://tewivgaooywryjwogabe.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_2viLn-_ybsBRVrDaudMivA_UbH3lZoC";
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let tumDersVerileri = [];
 
-        function tabloYaz(veri) {
-            const tbody = document.getElementById('sqlDataBody');
-            document.getElementById('rowCountBadge').innerText = `${veri.length} Ders Listeleniyor`;
-            tbody.innerHTML = '';
-            veri.forEach(d => {
-                let badgeClass = d.AI_Skor === 3 ? 'bg-score-3' : (d.AI_Skor === 2 ? 'bg-score-2' : 'bg-score-0');
-                tbody.innerHTML += `
-                    <tr title="Akademik Gerekçe: ${d.Gerekce}">
-                        <td>
-                            <strong style="color: #fff;">${d.Universite}</strong><br>
-                            <small class="text-muted" style="font-size: 0.8rem;">📍 ${d.Ulke}</small>
+        async function canlıVeriYukle() {
+            try {
+                const { data, error } = await supabase
+                    .from('All_Curriculum')
+                    .select('*')
+                    .order('AI_Maturity_Score', { ascending: false });
+
+                if (error) throw error;
+
+                tumDersVerileri = data || [];
+                istatistikleriGuncelle(tumDersVerileri);
+                tabloyuRenderEt(tumDersVerileri);
+            } catch (err) {
+                console.error("Bulut veri çekme hatası:", err);
+                document.getElementById('curriculum-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-danger font-semibold">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                            Bulut veritabanına bağlanılamadı. Lütfen tablolarınızı kontrol edin.
                         </td>
-                        <td>
-                            <span class="badge bg-dark text-primary border border-primary mb-1" style="font-size: 0.75rem;">${d.Kod}</span>
-                            <span class="d-block" style="font-size: 0.95rem; color: #e5e7eb;">${d.Ad}</span>
+                    </tr>`;
+            }
+        }
+
+        function istatistikleriGuncelle(veri) {
+            const benzersizUni = [...new Set(veri.map(d => d.University_Name))].length;
+            const toplamDers = veri.length;
+            const aiDersleri = veri.filter(d => d.AI_Maturity_Score > 0).length;
+            const aiOrani = toplamDers > 0 ? ((aiDersleri / toplamDers) * 100).toFixed(1) : 0;
+
+            document.getElementById('stat-uni').innerText = benzersizUni;
+            document.getElementById('stat-courses').innerText = toplamDers;
+            document.getElementById('stat-ai').innerText = `%${aiOrani}`;
+        }
+
+        function tabloyuRenderEt(veri) {
+            const tbody = document.getElementById('curriculum-table-body');
+            if (veri.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Aranan kriterlere uygun ders bulunamadı.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = veri.map(ders => {
+                let scoreBadge = `<span class="badge badge-ai-0">0 / 3 (Klasik)</span>`;
+                if (ders.AI_Maturity_Score === 3) {
+                    scoreBadge = `<span class="badge badge-ai-3"><i class="fa-solid fa-bolt text-warning me-1"></i> 3 / 3 (İleri)</span>`;
+                }
+
+                let catBadge = `<span class="badge-cat">${ders.Sub_Category || 'Klasik Uİ'}</span>`;
+
+                return `
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-dark" style="font-size: 0.9rem;">${ders.University_Name}</td>
+                        <td class="px-4 py-3 text-dark" style="font-size: 0.9rem;">
+                            <code class="text-danger bg-light px-1 py-0.5 rounded me-2" style="font-size: 0.8rem;">${ders.Course_Code || 'IR'}</code>
+                            <strong>${ders.Course_Name}</strong>
                         </td>
-                        <td style="text-align: center;">
-                            <span class="score-badge ${badgeClass}">${d.AI_Skor} / 3 Puan</span>
-                        </td>
+                        <td class="px-4 py-3">${catBadge}</td>
+                        <td class="px-4 py-3">${scoreBadge}</td>
+                        <td class="px-4 py-3 text-muted" style="font-size: 0.8rem; max-w-xs: truncate;" title="${ders.Academic_Justification || ''}">${ders.Academic_Justification || '-'}</td>
                     </tr>
                 `;
+            }).join('');
+        }
+
+        function filtrele() {
+            const aramaKelimesi = document.getElementById('search-input').value.toLowerCase();
+            const secilenKategori = document.getElementById('filter-category').value;
+
+            const filtrelenmis = tumDersVerileri.filter(ders => {
+                const aramaUyumlu = 
+                    ders.University_Name.toLowerCase().includes(aramaKelimesi) ||
+                    ders.Course_Name.toLowerCase().includes(aramaKelimesi) ||
+                    (ders.Course_Code && ders.Course_Code.toLowerCase().includes(aramaKelimesi));
+                
+                const kategoriUyumlu = secilenKategori === 'all' || ders.Sub_Category === secilenKategori;
+
+                return aramaUyumlu && kategoriUyumlu;
             });
+
+            tabloyuRenderEt(filtrelenmis);
         }
 
-        function canliAra() {
-            let k = document.getElementById('webSearch').value.toLowerCase();
-            let f = dataPool.filter(d => d.Ad.toLowerCase().includes(k) || d.Universite.toLowerCase().includes(k) || d.Kategori.toLowerCase().includes(k));
-            tabloYaz(f);
-        }
-
-        const ctx1 = document.getElementById('observatoryChart').getContext('2d');
-        new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(chartPool),
-                datasets: [{ label: 'Ortalama Teknoloji Skoru', data: Object.values(chartPool), backgroundColor: '#3b82f6', borderRadius: 6 }]
-            },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 3, grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } }, y: { ticks: { color: '#9ca3af' } } } }
-        });
-
-        const ctx2 = document.getElementById('categoryChart').getContext('2d');
-        new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(categoryPool),
-                datasets: [{ data: Object.values(categoryPool), backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#4b5563'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', boxWidth: 12 } } } }
-        });
-
-        tabloYaz(dataPool);
+        window.onload = canlıVeriYukle;
     </script>
 </body>
 </html>
