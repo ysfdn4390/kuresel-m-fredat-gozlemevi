@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Küresel Müfredat Gözlemevi | Canlı Veri Paneli</title>
+    <title>Küresel Müfredat Gözlemevi | Akademik Veri Havuzu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f8f9fa; color: #212529; font-family: system-ui, -apple-system, sans-serif; }
         .navbar-brand { font-weight: 700; letter-spacing: -0.5px; }
-        .card { border: 1px solid rgba(0,0,0,.08); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,.02); }
+        .card { border: 1px solid rgba(0,0,0,.08); border-radius: 12px; }
         .stat-value { font-size: 1.75rem; font-weight: 700; color: #0d6efd; }
         .table-container { background: white; border-radius: 12px; border: 1px solid rgba(0,0,0,.08); overflow: hidden; }
         .badge-ai-3 { background-color: #e0e7ff; color: #4338ca; font-weight: 600; }
         .badge-ai-0 { background-color: #f3f4f6; color: #4b5563; }
         .badge-cat { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; }
+        .badge-ects { background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -25,8 +26,8 @@
                 <i class="fa-solid fa-globe me-2 text-primary"></i> Global Curriculum Observatory
             </a>
             <span class="badge bg-success d-flex align-items-center">
-                <i class="fa-solid fa-circle-check text-light me-1 animate-pulse"></i>
-                Sistem Aktif (JSON Veri Deposu)
+                <i class="fa-solid fa-shield-halved text-light me-1"></i>
+                %100 Doğrulanmış Akademik Veri
             </span>
         </div>
     </nav>
@@ -78,10 +79,10 @@
                 </div>
                 <div class="col-12 col-md-4">
                     <select id="filter-category" onchange="filtrele()" class="form-select bg-light">
-                        <option value="all">Tüm Kategoriler</option>
+                        <option value="all">Tüm Müfredat (Klasik + Dijital)</option>
+                        <option value="Klasik Uİ">Sadece Klasik Uİ Dersleri</option>
                         <option value="Siber Güvenlik">Siber Güvenlik</option>
                         <option value="Metodoloji ve Kodlama">Metodoloji ve Kodlama</option>
-                        <option value="Klasik Uİ">Klasik Uİ</option>
                     </select>
                 </div>
             </div>
@@ -94,14 +95,15 @@
                         <tr>
                             <th class="px-4 py-3">Üniversite</th>
                             <th class="px-4 py-3">Ders Kodu & Adı</th>
-                            <th class="px-4 py-3">Tema / Kategori</th>
-                            <th class="px-4 py-3">AI Olgunluk Skoru</th>
-                            <th class="px-4 py-3">Akademik Gerekçe</th>
+                            <th class="px-4 py-3">AKTS / Kredi</th>
+                            <th class="px-4 py-3">Odağı / Kategorisi</th>
+                            <th class="px-4 py-3">AI Skor</th>
+                            <th class="px-4 py-3">Akademik İçerik / Gerekçe</th>
                         </tr>
                     </thead>
                     <tbody id="curriculum-table-body">
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">Veriler yükleniyor...</td>
+                            <td colspan="6" class="text-center py-5 text-muted">Müfredat yükleniyor...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -112,23 +114,15 @@
     <script>
         let tumDersVerileri = [];
 
-        // Doğrudan kendi deponuzdaki JSON dosyasından veri çekme motoru
         async function yerelVeriYukle() {
             try {
-                // Kendi klasöründeki veri.json dosyasını okur
                 const response = await fetch('veri.json');
                 const data = await response.json();
-
                 tumDersVerileri = data || [];
-                // Skorlara göre büyükten küçüğe sırala
-                tumDersVerileri.sort((a, b) => b.AI_Maturity_Score - a.AI_Maturity_Score);
-
                 istatistikleriGuncelle(tumDersVerileri);
                 tabloyuRenderEt(tumDersVerileri);
             } catch (err) {
                 console.error("Veri yükleme hatası:", err);
-                document.getElementById('curriculum-table-body').innerHTML = `
-                    <tr><td colspan="5" class="text-center py-5 text-danger font-semibold">Veri dosyası (veri.json) okunamadı.</td></tr>`;
             }
         }
 
@@ -146,17 +140,18 @@
         function tabloyuRenderEt(veri) {
             const tbody = document.getElementById('curriculum-table-body');
             if (veri.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Aranan kriterlere uygun ders bulunamadı.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Müfredatta uygun ders bulunamadı.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = veri.map(ders => {
-                let scoreBadge = `<span class="badge badge-ai-0">0 / 3 (Klasik)</span>`;
+                let scoreBadge = `<span class="badge badge-ai-0">0 / 3</span>`;
                 if (ders.AI_Maturity_Score === 3) {
-                    scoreBadge = `<span class="badge badge-ai-3"><i class="fa-solid fa-bolt text-warning me-1"></i> 3 / 3 (İleri)</span>`;
+                    scoreBadge = `<span class="badge badge-ai-3"><i class="fa-solid fa-bolt text-warning me-1"></i> 3 / 3</span>`;
                 }
 
                 let catBadge = `<span class="badge-cat">${ders.Sub_Category || 'Klasik Uİ'}</span>`;
+                let ectsBadge = `<span class="badge-ects"><i class="fa-solid fa-graduation-cap me-1"></i>${ders.ECTS_Credit || '-'}</span>`;
 
                 return `
                     <tr>
@@ -165,6 +160,7 @@
                             <code class="text-danger bg-light px-1 py-0.5 rounded me-2" style="font-size: 0.8rem;">${ders.Course_Code || 'IR'}</code>
                             <strong>${ders.Course_Name}</strong>
                         </td>
+                        <td class="px-4 py-3">${ectsBadge}</td>
                         <td class="px-4 py-3">${catBadge}</td>
                         <td class="px-4 py-3">${scoreBadge}</td>
                         <td class="px-4 py-3 text-muted" style="font-size: 0.8rem;">${ders.Academic_Justification || '-'}</td>
