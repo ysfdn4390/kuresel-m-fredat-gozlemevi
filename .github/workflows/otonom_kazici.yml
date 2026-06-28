@@ -2,14 +2,12 @@ name: Kuresel Mufredat Otonom Kazici
 
 on:
   schedule:
-    # Her gece Türkiye saatiyle 03:00'te otomatik çalışır (00:00 UTC)
-    - cron: '0 0 * * *'
-  workflow_dispatch: # İstediğiniz zaman el ile de başlatabilmeniz için
+    - cron: '0 0 * * *' # Her gece 03:00'te (TSİ) otomatik çalışır
+  workflow_dispatch: # İstediğiniz zaman el ile de çalıştırabilmeniz için
 
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
-
     steps:
     - name: Depoyu Bilgisayara Cek
       uses: actions/checkout@v3
@@ -21,11 +19,16 @@ jobs:
 
     - name: Gerekli Kutuphaneleri Yukle
       run: |
-        pip install supabase requests beautifulsoup4
+        pip install requests beautifulsoup4
 
     - name: Kazima Motorunu Atesle
-      env:
-        SUPABASE_URL: "https://tewivgaooywryjwogabe.supabase.co"
-        SUPABASE_KEY: "sb_publishable_2viLn-_ybsBRVrDaudMivA_UbH3lZoC"
       run: |
         python otonom_motor.py
+
+    - name: Guncellenen JSON Verilerini Depoya Kaydet
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+        git add veri.json
+        git commit -m "Otonom Mufredat Guncellendi [AKTS + Tum Dersler]" || exit 0
+        git push
