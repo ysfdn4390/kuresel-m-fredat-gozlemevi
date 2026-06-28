@@ -1,10 +1,20 @@
 [
   {
     "University_Name": "London School of Economics (LSE)",
+    "Course_Code": "IR100",
+    "Course_Name": "Concepts in International Relations",
+    "Sub_Category": "Klasik Uİ",
+    "AI_Maturity_Score": 0,
+    "ECTS_Credit": "6 AKTS",
+    "Academic_Justification": "Uluslararası ilişkiler disiplininin temel kavramları, egemenlik, güç ve küresel düzen teorileri."
+  },
+  {
+    "University_Name": "London School of Economics (LSE)",
     "Course_Code": "IR205",
     "Course_Name": "International Security in the Digital Age",
     "Sub_Category": "Siber Güvenlik",
     "AI_Maturity_Score": 3,
+    "ECTS_Credit": "6 AKTS",
     "Academic_Justification": "Siber savaş stratejileri, kritik altyapı güvenliği ve devletlerarası dijital espiyonajı inceler."
   },
   {
@@ -13,14 +23,16 @@
     "Course_Name": "Data Analytics and Algorithmic Governance",
     "Sub_Category": "Metodoloji ve Kodlama",
     "AI_Maturity_Score": 3,
+    "ECTS_Credit": "8 AKTS",
     "Academic_Justification": "Büyük veri analitiği, yapay zeka otomasyonu ve dijital çağ diplomasisini metodolojik olarak ele alır."
   },
   {
     "University_Name": "London School of Economics (LSE)",
-    "Course_Code": "IR100",
-    "Course_Name": "International Relations Theory and Practice",
+    "Course_Code": "IR312",
+    "Course_Name": "Foreign Policy Analysis",
     "Sub_Category": "Klasik Uİ",
     "AI_Maturity_Score": 0,
-    "Academic_Justification": "Geleneksel teorik dış politika yaklaşımları ve devletlerarası ilişkiler mekanizması."
+    "ECTS_Credit": "8 AKTS",
+    "Academic_Justification": "Devletlerin dış politika karar alma süreçleri, aktörler, yapılar ve kuramsal modeller."
   }
 ]
