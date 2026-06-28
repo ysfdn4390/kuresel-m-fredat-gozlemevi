@@ -1,0 +1,31 @@
+name: Kuresel Mufredat Otonom Kazici
+
+on:
+  schedule:
+    # Her gece Türkiye saatiyle 03:00'te otomatik çalışır (00:00 UTC)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # İstediğiniz zaman el ile de başlatabilmeniz için
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Depoyu Bilgisayara Cek
+      uses: actions/checkout@v3
+
+    - name: Python Ortamini Kur
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Gerekli Kutuphaneleri Yukle
+      run: |
+        pip install supabase requests beautifulsoup4
+
+    - name: Kazima Motorunu Atesle
+      env:
+        SUPABASE_URL: "https://tewivgaooywryjwogabe.supabase.co"
+        SUPABASE_KEY: "sb_publishable_2viLn-_ybsBRVrDaudMivA_UbH3lZoC"
+      run: |
+        python otonom_motor.py
