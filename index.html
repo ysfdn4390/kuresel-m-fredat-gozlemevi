@@ -6,7 +6,6 @@
     <title>Küresel Müfredat Gözlemevi | Canlı Veri Paneli</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #f8f9fa; color: #212529; font-family: system-ui, -apple-system, sans-serif; }
         .navbar-brand { font-weight: 700; letter-spacing: -0.5px; }
@@ -22,18 +21,17 @@
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
         <div class="container py-1">
-            <a class="navbar-brand d-flex items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="#">
                 <i class="fa-solid fa-globe me-2 text-primary"></i> Global Curriculum Observatory
             </a>
             <span class="badge bg-success d-flex align-items-center">
-                <span class="spinner-grow spinner-grow-sm text-light me-1" style="animation-duration: 1.5s;"></span>
-                Canlı Bulut Bağlantısı
+                <i class="fa-solid fa-circle-check text-light me-1 animate-pulse"></i>
+                Sistem Aktif (JSON Veri Deposu)
             </span>
         </div>
     </nav>
 
     <div class="container py-4">
-        
         <div class="row g-3 mb-4">
             <div class="col-12 col-md-4">
                 <div class="card p-3 bg-white">
@@ -103,10 +101,7 @@
                     </thead>
                     <tbody id="curriculum-table-body">
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
-                                Canlı bulut veritabanından güncel müfredat senkronize ediliyor...
-                            </td>
+                            <td colspan="5" class="text-center py-5 text-muted">Veriler yükleniyor...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -115,33 +110,25 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://tewivgaooywryjwogabe.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_2viLn-_ybsBRVrDaudMivA_UbH3lZoC";
-        
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let tumDersVerileri = [];
 
-        async function canlıVeriYukle() {
+        // Doğrudan kendi deponuzdaki JSON dosyasından veri çekme motoru
+        async function yerelVeriYukle() {
             try {
-                const { data, error } = await supabase
-                    .from('All_Curriculum')
-                    .select('*')
-                    .order('AI_Maturity_Score', { ascending: false });
-
-                if (error) throw error;
+                // Kendi klasöründeki veri.json dosyasını okur
+                const response = await fetch('veri.json');
+                const data = await response.json();
 
                 tumDersVerileri = data || [];
+                // Skorlara göre büyükten küçüğe sırala
+                tumDersVerileri.sort((a, b) => b.AI_Maturity_Score - a.AI_Maturity_Score);
+
                 istatistikleriGuncelle(tumDersVerileri);
                 tabloyuRenderEt(tumDersVerileri);
             } catch (err) {
-                console.error("Bulut veri çekme hatası:", err);
+                console.error("Veri yükleme hatası:", err);
                 document.getElementById('curriculum-table-body').innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-danger font-semibold">
-                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                            Bulut veritabanına bağlanılamadı. Lütfen tablolarınızı kontrol edin.
-                        </td>
-                    </tr>`;
+                    <tr><td colspan="5" class="text-center py-5 text-danger font-semibold">Veri dosyası (veri.json) okunamadı.</td></tr>`;
             }
         }
 
@@ -180,7 +167,7 @@
                         </td>
                         <td class="px-4 py-3">${catBadge}</td>
                         <td class="px-4 py-3">${scoreBadge}</td>
-                        <td class="px-4 py-3 text-muted" style="font-size: 0.8rem; max-w-xs: truncate;" title="${ders.Academic_Justification || ''}">${ders.Academic_Justification || '-'}</td>
+                        <td class="px-4 py-3 text-muted" style="font-size: 0.8rem;">${ders.Academic_Justification || '-'}</td>
                     </tr>
                 `;
             }).join('');
@@ -204,7 +191,7 @@
             tabloyuRenderEt(filtrelenmis);
         }
 
-        window.onload = canlıVeriYukle;
+        window.onload = yerelVeriYukle;
     </script>
 </body>
 </html>
